@@ -3,6 +3,7 @@ import torch.nn as nn
 from einops.layers.torch import Rearrange
 import math
 import torch.nn.functional as F
+# This is the folder for Speech Encoder
 
 def sinusoidal(T, dim,device="cuda"):
     position = torch.arange(T, dtype=torch.float32, device=device).unsqueeze(1)
