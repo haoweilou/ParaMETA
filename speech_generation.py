@@ -3,7 +3,6 @@ import torch
 from tts.model import ParaMETATTS
 from parameta import ParaMETA
 from encoder import Transformer
-import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
 
 from g2p import all_ipa_phoneme
