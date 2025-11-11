@@ -1,26 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from encoder import QFormer,Transformer
+from encoder import Transformer
 import numpy as np
-# import torch.optim as optim
-# from sentence_transformers import SentenceTransformer
-
-#ParaMETA,  is a meta-embedding framework designed to represent paralinguistic styles as a unified latent vector space
-#Which can be used to many downstream tasks such as emotion recogniotion, paralingustic analysis, style-controllable speech generation, labeling the data
-# Additionally, paraMETA holds potential applications in captioning and speech question answering, although these are beyond the scope of the current research due to limited expertise in large language model tuning.
-
-#Core Idea
-# paraMETA ingests inputs from diverse modalities such as text (e.g., transcripts, style prompts) and speech. 
-# 
-# Through modality-specific encoders and projection heads, ParaMETA aligns embeddings into a shared latent space where paralinguistic styles are represented consistently.
-#
-# Using supervised contrastive loss computed separately on style categories (emotion, age, gender, nationality, etc.), paraMETA clusters embeddings of the same paralinguistic style class tightly while separating different classes.
-# 
-# Learnable class embeddings act as semantic anchors or prototypes that guide the alignment of text and speech embeddings within the ParaMETA space.
-# Similar to prototypical learning
-
-# d is similarity based loss 
 #age: child 0-12, teenager: 13-19, youngadult: 20-30, adult: 31-50, senior: 50+
 para_category = {
     "emotion":["happy","angry","sad","neutral","surprise","disgust","fear","unknown"],
@@ -77,50 +59,6 @@ class TextEncoder(nn.Module):
     def forward(self, x):
         x = self.linear(x) #B,T
         return x
-
-def visualize(normalized_prototypes,epoch = 0):
-    import matplotlib.pyplot as plt
-    from sklearn.manifold import TSNE
-    import torch
-    import numpy as np
-    prototypes_cpu = {cat: emb.detach().cpu().numpy() for cat, emb in normalized_prototypes.items()}
-
-    all_embeddings = []
-    all_labels = []
-    all_categories = []
-
-    for category, embeddings in prototypes_cpu.items():
-        classes = para_category[category]
-        for i, emb in enumerate(embeddings):
-            all_embeddings.append(emb)
-            all_labels.append(classes[i])
-            all_categories.append(category)
-
-    all_embeddings = np.array(all_embeddings)  # [total_classes, embed_dim]
-
-    # Run t-SNE
-    tsne = TSNE(n_components=2, perplexity=5, random_state=42)
-    embeddings_2d = tsne.fit_transform(all_embeddings)
-
-    # Plot
-    plt.figure(figsize=(12,8))
-
-    # Color map for categories
-    category_colors = {
-        "emotion": "red",
-        "age": "blue",
-        "nation": "green",
-        "gender": "purple"
-    }
-    for i, (x, y) in enumerate(embeddings_2d):
-        plt.scatter(x, y, color=category_colors[all_categories[i]], label=all_categories[i] if all_categories[i] not in plt.gca().get_legend_handles_labels()[1] else "")
-        plt.text(x + 0.5, y + 0.5, all_labels[i], fontsize=9)
-
-    plt.title("t-SNE visualization of paraMETA prototype embeddings")
-    plt.legend()
-    # plt.grid(True)
-    plt.savefig(f"./save/fig/{epoch}.png")
-
 
 def supervised_contrastive_loss(embeddings, labels, temperature=0.07,ignore_label=-1):
     """
