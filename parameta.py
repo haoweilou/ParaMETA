@@ -62,11 +62,11 @@ class TextEncoder(nn.Module):
 
 def supervised_contrastive_loss(embeddings, labels, temperature=0.07,ignore_label=-1):
     """
-    Compute supervised contrastive loss for one category.
+    Compute supervised contrastive loss for one Task. This is L_SCL^(t) in the paper. eq (5)
 
     Args:
         embeddings: Tensor [B, D], normalized or raw embeddings
-        labels: Tensor [B], class indices for the category
+        labels: Tensor [B], class indices for the Task
         temperature: float, temperature scaling
 
     Returns:
@@ -182,6 +182,7 @@ def momentum_update_prototypes_mh(prototypes, speech_embeddings, labels, categor
             proto[c] = F.normalize(proto[c].unsqueeze(0), p=2, dim=1).squeeze(0)
 
 #each part of embedding is responsibile for different tasks
+# this is L_SCL in the paper eq (6)
 def category_supervised_contrastive_loss(embeddings,labels,temperature=0.07):
     total_loss = 0
     for i in range(labels.shape[1]):
@@ -351,7 +352,7 @@ class ParaMETA(nn.Module):
                 proto_norm = F.normalize(proto_tensor, dim=1)  # [num_classes, D]
             else: 
                 proto_norm = F.normalize(proto_tensor[:-1], dim=1)  # [num_classes-1, D] 
-                
+
             start = i * 192
             end = start + 192
             if end == 768: end = None
