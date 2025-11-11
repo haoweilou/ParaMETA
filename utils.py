@@ -8,6 +8,7 @@ import numpy as np
 from scipy.io.wavfile import read
 import torch
 import torchaudio
+from tts.mel_processing import spectrogram_torch,spec_to_mel_torch
 
 def normalize_audio(audio, target_peak=0.95):
     # Peak normalization to target_peak level (usually < 1.0)
@@ -152,7 +153,6 @@ def resample(waveforms, orig_sr=22050, target_sr=48000):
 
     return padded_batch
 
-from tts.mel_processing import spectrogram_torch,spec_to_mel_torch
 def load_wav_to_mel(full_path):
   audio,sr = load_wav_to_torch(full_path)
   if max(audio) >= 10: 
