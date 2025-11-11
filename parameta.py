@@ -393,8 +393,7 @@ class ParaMETA(nn.Module):
         s_pal = prototype_alignment_loss(speech_embed,prototypes,labels)
         t_pal = prototype_alignment_loss(text_embed,prototypes,labels)
 
-        #each loss is treated equally
-        #we want also regulate the meta space
+        #meta space regularization
         meta_scl = meta_regularization_loss(meta_embed,labels)
 
         total_loss = s_scl + meta_scl + self.weight*(s_pal+t_pal)
