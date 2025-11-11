@@ -337,7 +337,7 @@ class ParaMETA(nn.Module):
         total_loss = s_scl + meta_scl + self.weight*(s_pal+t_pal)
         return total_loss,s_scl,meta_scl,s_pal,t_pal
     
-    def embed_label(self,embed,prototypes):
+    def embed_label(self,embed,prototypes,unknow_exist=False):
         #get classfication label for the batch of embedding given
         #embed: [B,D]
         #prototypes: dict of embedding of shape [NUM_CLASS,D]
@@ -347,7 +347,11 @@ class ParaMETA(nn.Module):
         i = 0
         for i,cat in enumerate(["emotion","age","nation","gender"]):
             proto_tensor = prototypes[cat]
-            proto_norm = F.normalize(proto_tensor, dim=1)  # [num_classes, D]
+            if unknow_exist:
+                proto_norm = F.normalize(proto_tensor, dim=1)  # [num_classes, D]
+            else: 
+                proto_norm = F.normalize(proto_tensor[:-1], dim=1)  # [num_classes-1, D] 
+                
             start = i * 192
             end = start + 192
             if end == 768: end = None
@@ -357,7 +361,7 @@ class ParaMETA(nn.Module):
         pred_labels = torch.cat(preds, dim=1)              # [B, C]
         return pred_labels
         
-    def analysis(self, spec_batch):
+    def analysis(self, spec_batch,unknow_exist=False):
         """
         Analyze a batch of spectrograms and return a list of classification strings.
 
@@ -370,9 +374,8 @@ class ParaMETA(nn.Module):
         speech_embed = self.encode(spec_batch)
         # Get prototypes
         prototypes = self.proto_embed()  # dict or tensor depending on your implementation
-        # Import the helper function
         # Predict labels
-        result = self.embed_label(speech_embed, prototypes)  # assumed output shape: [B, 4]
+        result = self.embed_label(speech_embed, prototypes,unknow_exist)  # assumed output shape: [B, 4]
         result = result.detach().cpu().numpy().astype(np.int32)
 
         # Build result strings

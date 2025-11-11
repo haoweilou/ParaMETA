@@ -1,0 +1,14 @@
+file,gender,age,emotion,language
+0.wav,female,adult,neutral,english
+1.wav,female,adult,neutral,chinese
+2.wav,female,adult,neutral,chinese
+3.wav,female,adult,angry,chinese
+4.wav,female,adult,happy,chinese
+5.wav,female,adult,sad,chinese
+6.wav,female,adult,surprise,chinese
+7.wav,male,adult,happy,english
+8.wav,male,adult,sad,english
+9.wav,male,adult,angry,english
+10.wav,male,adult,neutral,english
+11.wav,male,adult,surprise,english
+12.wav,male,teenager,unknow,english
