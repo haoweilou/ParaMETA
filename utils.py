@@ -151,3 +151,24 @@ def resample(waveforms, orig_sr=22050, target_sr=48000):
         padded_batch[i, 0, :resampled_list[i].shape[-1]] = resampled_list[i]
 
     return padded_batch
+
+from tts.mel_processing import spectrogram_torch,spec_to_mel_torch
+def load_wav_to_mel(full_path):
+  audio,sr = load_wav_to_torch(full_path)
+  if max(audio) >= 10: 
+      audio = audio / 32768.0
+  audio = torch.tensor(audio).unsqueeze(0)
+  if sr != 22050: 
+    resampler = torchaudio.transforms.Resample(orig_freq=sr, new_freq=22050)
+    audio = resampler(audio)
+  spec = spectrogram_torch(audio, 1024, sr, 256, 1024, center=False)
+  spec = torch.squeeze(spec, 0)
+  melspec = spec_to_mel_torch(spec,1024,80,sr,0,None)
+  return melspec
+
+def load_wav_to_torch(full_path):
+  # waveform, sample_rate = torchaudio.load(full_path)
+  # return waveform.squeeze(0), sample_rate  # mono assumed; adjust if stereo
+  sampling_rate, data = read(full_path)
+  data = data.astype(np.float32)
+  return data, sampling_rate
