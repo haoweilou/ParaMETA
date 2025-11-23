@@ -10,18 +10,7 @@ from parameta import para_category
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 hps = utils.get_hparams()
-model = ParaMETATTS(len(all_ipa_phoneme),8,
-        hps.data.filter_length // 2 + 1,
-        hps.train.segment_size // hps.data.hop_length,
-        **hps.model).to(device)
-model.load_state_dict(torch.load(f"./ckp/parameta_tts.pt"))
-# from huggingface_hub import upload_folder
-# upload_folder(
-#     repo_id="haoweilou/ParaMETA",
-#     folder_path="./tts/ParaMETA_TTS",
-#     commit_message="Initial upload"
-# )
-# model.push_to_hub("haoweilou/ParaMETA", repo_path_or_name="./tts/ParaMETA_TTS")
+model = ParaMETATTS.from_pretrained("haoweilou/ParaMETA").to(device)
 model.eval()
 
 parameta = ParaMETA(768,Transformer()).cuda()
@@ -42,7 +31,6 @@ model.eval()
 from g2p import mix_to_ipa,ipa_to_idx
 from utils import save_audio
 
-# This is to generate speech with speaking style controlled by speech prompt
 speech_embed = parameta.encode(mel).to(device)  
 prediction = parameta.analysis(mel)
 print("Speaking Style Recognition:",prediction)

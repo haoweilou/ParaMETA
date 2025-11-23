@@ -5,28 +5,17 @@ from parameta import ParaMETA
 from encoder import Transformer
 from sentence_transformers import SentenceTransformer
 
-from g2p import all_ipa_phoneme
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 hps = utils.get_hparams()
-model = ParaMETATTS(len(all_ipa_phoneme),8,
-        hps.data.filter_length // 2 + 1,
-        hps.train.segment_size // hps.data.hop_length,
-        **hps.model).to(device)
-model.load_state_dict(torch.load(f"./ckp/parameta_tts.pt"))
-# from huggingface_hub import upload_folder
-# upload_folder(
-#     repo_id="haoweilou/ParaMETA",
-#     folder_path="./tts/ParaMETA_TTS",
-#     commit_message="Initial upload"
-# )
-# model.push_to_hub("haoweilou/ParaMETA", repo_path_or_name="./tts/ParaMETA_TTS")
+from huggingface_hub import load_torch_model
+model = ParaMETATTS.from_pretrained("haoweilou/ParaMETA").to(device)
 model.eval()
 
 parameta = ParaMETA(768,Transformer()).cuda()
 text_encoder = SentenceTransformer('all-mpnet-base-v2',trust_remote_code=True)
-ckp  = torch.load(f"./ckp/ParaMETA_Transformer.pt")
 
+ckp  = torch.load(f"./ckp/ParaMETA_Transformer.pt")
 parameta.load_state_dict(ckp['net'])
 print(ckp.keys(),ckp['epoch'])
 # load reference wav
