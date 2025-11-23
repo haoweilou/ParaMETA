@@ -3,7 +3,6 @@ import torch
 from tts.model import ParaMETATTS
 from parameta import ParaMETA
 from encoder import Transformer
-from sentence_transformers import SentenceTransformer
 
 from g2p import all_ipa_phoneme
 from parameta import para_category
@@ -14,7 +13,6 @@ model = ParaMETATTS.from_pretrained("haoweilou/ParaMETA").to(device)
 model.eval()
 
 parameta = ParaMETA(768,Transformer()).cuda()
-text_encoder = SentenceTransformer('all-mpnet-base-v2',trust_remote_code=True)
 ckp  = torch.load(f"./ckp/ParaMETA_Transformer.pt")
 
 parameta.load_state_dict(ckp['net'])
@@ -59,7 +57,7 @@ for emotion_idx in range(len(protoytype['emotion'])-1): # exclude unknow class
 for age_idx in range(len(protoytype['age'])-1): # exclude unknow class
     age = para_category['age'][age_idx]
     print("Manipulate speech with age:",age)
-    age_embed = parameta.norm_emotion(protoytype['age'][age_idx])
+    age_embed = parameta.norm_age(protoytype['age'][age_idx])
     style_embed = speech_embed.clone()
     style_embed[:,192:384] = age_embed
     wave,_,_,_ = model.infer(ipa_index,tone,x_lengths=src_lens,length_scale=1,noise_scale=0.5,noise_scale_w=0,ab_style=style_embed)
@@ -68,7 +66,7 @@ for age_idx in range(len(protoytype['age'])-1): # exclude unknow class
 for language_idx in range(len(protoytype['nation'])-1): # exclude unknow class
     language = para_category['nation'][language_idx]
     print("Manipulate speech with language:",language)
-    lang_embed = parameta.norm_emotion(protoytype['nation'][language_idx])
+    lang_embed = parameta.norm_nation(protoytype['nation'][language_idx])
     style_embed = speech_embed.clone()
     style_embed[:,384:576] = lang_embed
     wave,_,_,_ = model.infer(ipa_index,tone,x_lengths=src_lens,length_scale=1,noise_scale=0.5,noise_scale_w=0,ab_style=style_embed)
@@ -78,7 +76,7 @@ for language_idx in range(len(protoytype['nation'])-1): # exclude unknow class
 for gender_index in range(len(protoytype['gender'])-1): # exclude unknow class
     gender = para_category['gender'][gender_index]
     print("Manipulate speech with gender:",gender)
-    gender_embed = parameta.norm_emotion(protoytype['gender'][gender_index])
+    gender_embed = parameta.norm_gender(protoytype['gender'][gender_index])
     style_embed = speech_embed.clone()
     style_embed[:,576:] = gender_embed
     wave,_,_,_ = model.infer(ipa_index,tone,x_lengths=src_lens,length_scale=1,noise_scale=0.5,noise_scale_w=0,ab_style=style_embed)
