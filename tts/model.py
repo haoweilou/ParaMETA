@@ -827,3 +827,74 @@ class ParaMETATTS(nn.Module,
       ab_style_global = self.abs_global_project(ab_style).unsqueeze(-1)#b,h,1
 
     return self.vits.infer(x, m_p, logs_p, x_mask, ab_style_global, noise_scale, length_scale, noise_scale_w, max_len)
+
+class ParaStyleTTS2(nn.Module,
+      PyTorchModelHubMixin,
+      repo_url="https://github.com/haoweilou/ParaMETA"):
+  def __init__(self, 
+    n_vocab,
+    n_style,
+    spec_channels,
+    segment_size,
+    inter_channels,
+    hidden_channels,
+    filter_channels,
+    n_heads,
+    n_layers,
+    kernel_size,
+    p_dropout,
+    resblock, 
+    resblock_kernel_sizes, 
+    resblock_dilation_sizes, 
+    upsample_rates, 
+    upsample_initial_channel, 
+    upsample_kernel_sizes,
+    gin_channels=0,
+    weighted=True,
+    **kwargs):
+
+    super().__init__()
+    # This is a modified version of ParaStyleTTS, that the speaking style is coming from a speech encoder, that is learned end to end during model training.
+    self.hidden_channels = hidden_channels
+    self.enc_p = PhonemeStyleEncoder(n_vocab,
+        n_style,
+        inter_channels,
+        hidden_channels,
+        filter_channels,
+        n_heads,
+        n_layers,
+        kernel_size,
+        p_dropout)
+    
+    self.abs_local_project = nn.Linear(768,hidden_channels)
+    self.abs_style_encoder = attentions.Encoder(
+      hidden_channels,
+      filter_channels,
+      n_heads,
+      n_layers,
+      kernel_size,
+      p_dropout)
+
+    self.film = FiLM(hidden_channels,hidden_channels)
+    self.abs_global_project = nn.Linear(768,gin_channels) 
+    self.normalizer = nn.LayerNorm(768)
+    self.vits = VITS(spec_channels, segment_size, inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes,gin_channels)
+    self.speech_encoder = None
+    
+  def forward(self, x, s, x_lengths, y, y_lengths, mel=None):
+    x, m_p, logs_p, x_mask = self.enc_p(x, s, x_lengths)#get text embed
+    #ab_style is the abstract style embedding
+    ab_style = self.speech_encoder(mel)
+    ab_style = self.normalizer(ab_style)
+    ab_style_global = self.abs_global_project(ab_style).unsqueeze(-1)#b,h,1
+    return self.vits(x, m_p, logs_p, x_mask, y, y_lengths, ab_style_global)
+  
+  
+  def infer(self, x, s, x_lengths, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None, mel=None):
+    x, m_p, logs_p, x_mask = self.enc_p(x, s, x_lengths)
+    #ab_style is the abstract style embedding
+    ab_style_global = None
+    ab_style = self.speech_encoder(mel)
+    ab_style = self.normalizer(ab_style)
+    ab_style_global = self.abs_global_project(ab_style).unsqueeze(-1)#b,h,1
+    return self.vits.infer(x, m_p, logs_p, x_mask, ab_style_global, noise_scale, length_scale, noise_scale_w, max_len)
