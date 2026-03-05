@@ -3,6 +3,10 @@ from encoder import Transformer
 from g2p import all_ipa_phoneme,mix_to_ipa,ipa_to_idx
 import torch
 import utils
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+
+path = hf_hub_download("haoweilou/ParaMETA", "speech_only/model.safetensors")
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # this model is the tts model + speaking style encoder traiend in end-to-end manner.
 # speech-only model in the paper
@@ -10,8 +14,10 @@ hps = utils.get_hparams()
 model = ParaStyleTTS2(len(all_ipa_phoneme),8, hps.data.filter_length // 2 + 1, hps.train.segment_size // hps.data.hop_length, **hps.model)
 model.eval()
 model.speech_encoder = Transformer()
-_ = utils.load_checkpoint(f"./ckp/tts_train_style.pth", model, None)
 model.to(device)
+state = load_file(path)
+model.load_state_dict(state, strict=False)
+
 text = "今天天气真好,我们一起出去玩吧"
 ipa,tone = mix_to_ipa(text)
 mel1 = utils.load_wav_to_mel("./generation/parameta_wo/reference1.wav").unsqueeze(0).to(device)
