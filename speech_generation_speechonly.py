@@ -5,12 +5,11 @@ import torch
 import utils
 from huggingface_hub import hf_hub_download
 from safetensors.torch import load_file
+# this model is the tts model + speaking style encoder trained end-to-end, speech-only model in the paper
 
-# path = hf_hub_download("haoweilou/ParaMETA", "speech_only/model.safetensors")
+path = hf_hub_download("haoweilou/ParaMETA", "speech_only/model.safetensors")
 state = load_file("./speech_only/model.safetensors")
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-# this model is the tts model + speaking style encoder traiend in end-to-end manner.
-# speech-only model in the paper
 hps = utils.get_hparams()
 model = ParaStyleTTS2(len(all_ipa_phoneme),8, hps.data.filter_length // 2 + 1, hps.train.segment_size // hps.data.hop_length, **hps.model)
 model.eval()
